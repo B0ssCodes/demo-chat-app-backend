@@ -1,5 +1,6 @@
 ﻿namespace ChatApp.Models
 {
+    // This class is used to store the user's connection information
     public class UserConnection
     {
         // Connected user's username

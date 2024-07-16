@@ -7,17 +7,19 @@ namespace ChatApp.Hubs
     // Extend the base Hub class
     public class ChatHub : Hub
     {
+        // Using dependancy injection to get the MemoryDb instance
         private readonly MemoryDb _memoryDb;
         public ChatHub(MemoryDb memoryDb)
         {
             _memoryDb = memoryDb;
         }
-        // Define a method that clients can call to send messages
+        // This method is called on the initial handshake to the system.
         public async Task JoinChat(UserConnection userConnection)
         {
             await Clients.All.SendAsync("ReceiveMessage", "admin", $"{userConnection.Username} has joined");
         }
 
+        // This method is called when a user joins a specific chat room. It will add the user to the group and send a message to the group. 
         public async Task JoinSpecificChatRoom(UserConnection userConnection)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.ChatRoom);
@@ -28,7 +30,7 @@ namespace ChatApp.Hubs
 
         public async Task SendMessage(string message)
         {
-            // if the the DB already has the connection
+            // if the user is connected to a room, send the message to the room
             if (_memoryDb.connections.TryGetValue(Context.ConnectionId, out UserConnection conn))
             {
                 await Clients.Group(conn.ChatRoom).SendAsync("SendMessages", conn.Username, message);

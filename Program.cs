@@ -10,6 +10,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
+
+// Add Cors policy to allow the React frontend to connect to the backend, Implementation is not very secure but it is good for development
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactFrontend", builder =>
@@ -20,6 +22,8 @@ builder.Services.AddCors(options =>
         .AllowCredentials();
     });
 });
+
+// Add the MemoryDb to the services using the singleton pattern to only have one instance of it running
 builder.Services.AddSingleton<MemoryDb>();
 
 
@@ -33,8 +37,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Add the Cors policy to the middleware
 app.UseCors("ReactFrontend");
+
 app.UseAuthorization();
+// Add the SignalR hub to the middleware using the /Chat path
 app.MapHub<ChatHub>("/Chat");
 app.MapControllers();
 
