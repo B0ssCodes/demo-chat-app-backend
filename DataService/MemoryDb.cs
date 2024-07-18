@@ -11,5 +11,9 @@ namespace ChatApp.DataService
 
         // Get public access to the readonly dictionary
         public ConcurrentDictionary<string, UserConnection> connections => _connections;
+
+        private readonly int _cookieCount = 0;
+
+        public int cookieCount => _cookieCount;
     }
 }
