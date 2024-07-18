@@ -1,5 +1,9 @@
+using ChatApp.Data;
 using ChatApp.DataService;
 using ChatApp.Hubs;
+using ChatApp.Repositories;
+using ChatApp.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +14,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultDbConnection")));
+
 
 // Add Cors policy to allow the React frontend to connect to the backend, Implementation is not very secure but it is good for development
 builder.Services.AddCors(options =>

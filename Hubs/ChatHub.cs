@@ -37,11 +37,11 @@ namespace ChatApp.Hubs
             }
         }
 
-        public async Task IncreaseCookie(int incrementBy)
+        public async Task IncreaseCookie()
         {
             if (_memoryDb.connections.TryGetValue(Context.ConnectionId, out UserConnection conn))
             {
-                await Clients.Group(conn.ChatRoom).SendAsync("IncreaseCookie", "System", _memoryDb.cookieCount);
+                await Clients.Group(conn.ChatRoom).SendAsync("IncreaseCookie");
             }
         }
 
