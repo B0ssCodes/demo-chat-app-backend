@@ -100,11 +100,11 @@ namespace ChatApp.Controllers
             ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
             try
             {
-                RoomResponseDTO roomResponseDTO = await _roomRepository.AddUserToRoom(userId, roomId);
+                await _roomRepository.AddUserToRoom(userId, roomId);
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
                 _response.Message = "User added to room successfully";
-                _response.Result = roomResponseDTO;
+                _response.Result = null;
                 return Ok(_response);
             }
             catch (Exception ex)

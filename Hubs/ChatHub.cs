@@ -1,4 +1,5 @@
-﻿using ChatApp.DataService;
+﻿using ChatApp.Data;
+using ChatApp.DataService;
 using ChatApp.Models;
 using Microsoft.AspNetCore.SignalR;
 
@@ -8,41 +9,61 @@ namespace ChatApp.Hubs
     public class ChatHub : Hub
     {
         // Using dependancy injection to get the MemoryDb instance
-        private readonly MemoryDb _memoryDb;
-        public ChatHub(MemoryDb memoryDb)
+        private readonly ApplicationDbContext _db;
+        public ChatHub(ApplicationDbContext db)
         {
-            _memoryDb = memoryDb;
+            _db = db;
         }
-        // This method is called on the initial handshake to the system.
-        public async Task JoinChat(UserConnection userConnection)
+        public override async Task OnConnectedAsync()
         {
-            await Clients.All.SendAsync("ReceiveMessage", "admin", $"{userConnection.Username} has joined");
-        }
-
-        // This method is called when a user joins a specific chat room. It will add the user to the group and send a message to the group. 
-        public async Task JoinSpecificChatRoom(UserConnection userConnection)
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.ChatRoom);
-            _memoryDb.connections.TryAdd(Context.ConnectionId, userConnection);
-            await Clients.Group(userConnection.ChatRoom)
-                .SendAsync("JoinSpecificChatRoom", "System", $"{userConnection.Username} has joined room {userConnection.ChatRoom}");
-        }
-
-        public async Task SendMessage(string message)
-        {
-            // if the user is connected to a room, send the message to the room
-            if (_memoryDb.connections.TryGetValue(Context.ConnectionId, out UserConnection conn))
+            var httpContext = Context.GetHttpContext();
+            var userIdString = httpContext.Request.Query["userId"];
+            if (!int.TryParse(userIdString, out int userId))
             {
-                await Clients.Group(conn.ChatRoom).SendAsync("SendMessages", conn.Username, message);
+                throw new Exception("Invalid user ID");
             }
-        }
 
-        public async Task IncreaseCookie()
-        {
-            if (_memoryDb.connections.TryGetValue(Context.ConnectionId, out UserConnection conn))
+            // Query the database for all rooms the user is a part of
+            var userRooms = _db.Rooms.Where(r => r.Users.Any(u => u.UserId == userId));
+
+            // Add the user to each room's SignalR group
+            foreach (var room in userRooms)
             {
-                await Clients.Group(conn.ChatRoom).SendAsync("IncreaseCookie");
+                await Groups.AddToGroupAsync(Context.ConnectionId, room.RoomId.ToString());
             }
+
+            await base.OnConnectedAsync();
+        }
+        public async Task SendMessage(int userId, int roomId, string messageContent)
+        {
+            User user = await _db.Users.FindAsync(userId);
+
+            if (user == null)
+            {
+                throw new Exception("User not found");
+            }
+
+            Room room = await _db.Rooms.FindAsync(roomId);
+            if (room == null)
+            {
+                throw new Exception("Room not found");
+            }
+
+            // Create a new message object to save to the database
+            Message newMessage = new Message
+            {
+                UserId = userId,
+                RoomId = roomId,
+                Content = messageContent,
+                Timestamp = DateTime.UtcNow // Consider using UTC for consistency
+            };
+
+            // Save the new message to the database
+            await _db.Messages.AddAsync(newMessage);
+            await _db.SaveChangesAsync();
+
+            // Broadcast the message to all clients in the room
+            await Clients.Group(roomId.ToString()).SendAsync("ReceiveMessage", newMessage);
         }
 
     }

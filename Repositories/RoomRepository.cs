@@ -1,7 +1,9 @@
 ﻿using ChatApp.Data;
+using ChatApp.Hubs;
 using ChatApp.Models;
 using ChatApp.Models.Dto;
 using ChatApp.Repositories.Interfaces;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatApp.Repositories
@@ -9,13 +11,15 @@ namespace ChatApp.Repositories
     public class RoomRepository : IRoomRepository
     {
         private readonly ApplicationDbContext _db;
+        private readonly IHubContext<ChatHub> _chatHub;
 
-        public RoomRepository(ApplicationDbContext db)
+        public RoomRepository(ApplicationDbContext db, IHubContext<ChatHub> chatHub)
         {
             _db = db;
+            _chatHub = chatHub;
         }
 
-        public async Task<RoomResponseDTO> AddUserToRoom(int userId, int roomId)
+        public async Task AddUserToRoom(int userId, int roomId)
         {
             // Find the user
             var user = await _db.Users.FindAsync(userId);
@@ -27,7 +31,7 @@ namespace ChatApp.Repositories
             // Find the room
             var room = await _db.Rooms
                 .Include(r => r.Users) // Include existing users to avoid overwriting them
-                .Include(r => r.Messages) // Include messages if you want them in the response
+                /*.Include(r => r.Messages)*/ // Include messages if you want them in the response
                 .FirstOrDefaultAsync(r => r.RoomId == roomId);
             if (room == null)
             {
@@ -54,16 +58,16 @@ namespace ChatApp.Repositories
                     Description = u.Description,
                     // Map other necessary properties
                 }).ToList(),
-                Messages = room.Messages.Select(m => new MessageResponseDTO
-                {
-                    MessageId = m.MessageId,
-                    Content = m.Content,
-                    RoomId = m.RoomId,
-                    // Map other necessary properties
-                }).ToList(),
+                //Messages = room.Messages.Select(m => new MessageResponseDTO
+                //{
+                //    MessageId = m.MessageId,
+                //    Content = m.Content,
+                //    RoomId = m.RoomId,
+                //    // Map other necessary properties
+                //}).ToList(),
             };
 
-            return response;
+            await _chatHub.Clients.Group(roomId.ToString()).SendAsync("UserAddedToRoom", response);
         }
 
         public async Task<RoomResponseDTO> CreateRoom(RoomRequestDTO roomDTO)
@@ -98,13 +102,13 @@ namespace ChatApp.Repositories
                     Description = u.Description,
                   
                 }).ToList(),
-                Messages = room.Messages.Select(m => new MessageResponseDTO
-                {
-                    MessageId = m.MessageId,
-                    Content = m.Content,
-                    RoomId = m.RoomId,
+                //Messages = room.Messages.Select(m => new MessageResponseDTO
+                //{
+                //    MessageId = m.MessageId,
+                //    Content = m.Content,
+                //    RoomId = m.RoomId,
                    
-                }).ToList(),
+                //}).ToList(),
             };
 
             return response;
@@ -115,7 +119,7 @@ namespace ChatApp.Repositories
         {
             Room room = await _db.Rooms
                 .Include(r => r.Users)
-                .Include(r => r.Messages)
+                //.Include(r => r.Messages)
                 .FirstOrDefaultAsync(r => r.RoomId == roomId);
 
             if (room == null)
@@ -136,13 +140,13 @@ namespace ChatApp.Repositories
                     Description = u.Description,
 
                 }).ToList(),
-                Messages = room.Messages.Select(m => new MessageResponseDTO
-                {
-                    MessageId = m.MessageId,
-                    Content = m.Content,
-                    RoomId = m.RoomId,
+                //Messages = room.Messages.Select(m => new MessageResponseDTO
+                //{
+                //    MessageId = m.MessageId,
+                //    Content = m.Content,
+                //    RoomId = m.RoomId,
 
-                }).ToList(),
+                //}).ToList(),
             };
 
             return response;
@@ -150,7 +154,7 @@ namespace ChatApp.Repositories
 
         public async Task<List<RoomResponseDTO>> GetRooms()
         {
-            var rooms = await _db.Rooms.Include(r => r.Users).Include(r => r.Messages).ToListAsync();
+            var rooms = await _db.Rooms.Include(r => r.Users)/*.Include(r => r.Messages)*/.ToListAsync();
 
             if (rooms == null)
             {
@@ -169,13 +173,13 @@ namespace ChatApp.Repositories
                     Email = user.Email,
                     Description = user.Description,
                 }).ToList(),
-                Messages = room.Messages.Select(message => new MessageResponseDTO
-                {
-                    MessageId = message.MessageId,
-                    Content = message.Content,
-                    RoomId = message.RoomId,
+                //Messages = room.Messages.Select(message => new MessageResponseDTO
+                //{
+                //    MessageId = message.MessageId,
+                //    Content = message.Content,
+                //    RoomId = message.RoomId,
 
-                }).ToList(),
+                //}).ToList(),
             });
 
             return roomDTOs.ToList();
@@ -187,7 +191,7 @@ namespace ChatApp.Repositories
         {
             var rooms = await _db.Rooms
                 .Include(r => r.Users)
-                .Include(r => r.Messages)
+                //.Include(r => r.Messages)
                 .Where(r => r.Users.Any(u => u.UserId == userId))
                 .ToListAsync();
 
@@ -207,13 +211,13 @@ namespace ChatApp.Repositories
                     Email = user.Email,
                     Description = user.Description,
                 }).ToList(),
-                Messages = room.Messages.Select(message => new MessageResponseDTO
-                {
-                    MessageId = message.MessageId,
-                    Content = message.Content,
-                    RoomId = message.RoomId,
+                //Messages = room.Messages.Select(message => new MessageResponseDTO
+                //{
+                //    MessageId = message.MessageId,
+                //    Content = message.Content,
+                //    RoomId = message.RoomId,
 
-                }).ToList(),
+                //}).ToList(),
             });
 
             return roomDTOs.ToList();

@@ -12,6 +12,6 @@ namespace ChatApp.Repositories.Interfaces
         Task<RoomResponseDTO> GetRoom(int roomId);
         // Adds a new room to the database and returns it.
         Task<RoomResponseDTO> CreateRoom(RoomRequestDTO roomDTO);
-        Task<RoomResponseDTO> AddUserToRoom(int userId, int roomId);
+        Task AddUserToRoom(int userId, int roomId);
     }
 }
