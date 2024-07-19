@@ -4,6 +4,10 @@ using ChatApp.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace ChatApp.Controllers
 {
@@ -12,12 +16,13 @@ namespace ChatApp.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
+        private readonly IConfiguration _configuration;
 
 
-        public UserController(IUserRepository userRepository)
+        public UserController(IUserRepository userRepository, IConfiguration configuration)
         {
             _userRepository = userRepository;
-      
+            _configuration = configuration;
         }
 
         [HttpPost]
@@ -35,11 +40,36 @@ namespace ChatApp.Controllers
                 return Unauthorized(_response);
             }
 
-            
+            // Generate JWT token
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]); // Use the secret key from appsettings.json
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+            new Claim(ClaimTypes.Name, user.Username)
+            // ADD MORE CLAIMS
+        }),
+                Expires = DateTime.UtcNow.AddDays(14), // Token expiration
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            // Append the token to the response
             _response.Status = HttpStatusCode.OK;
             _response.Success = true;
             _response.Message = "Login successful";
-            _response.Result = user;
+            _response.Result = new LoginResponseDTO
+            {
+                // Assuming LoginResponseDTO can hold a token, otherwise adjust accordingly
+                Token = tokenString,
+                UserId = user.UserId,
+                Username = user.Username,
+                Email = user.Email,
+                Description = user.Description
+            };
 
             return Ok(_response);
         }
@@ -58,10 +88,17 @@ namespace ChatApp.Controllers
                 _response.Result = null;
                 return Conflict(_response);
             }
+
+            RegisterResponseDTO responseDTO = new RegisterResponseDTO
+            {
+                Username = user.Username,
+                Email = user.Email,
+                Description = user.Description
+            };
             _response.Status = HttpStatusCode.OK;
             _response.Success = true;
             _response.Message = "Register successful";
-            _response.Result = user;
+            _response.Result = responseDTO;
             return Ok(_response);
         }
 

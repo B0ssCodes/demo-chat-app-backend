@@ -7,7 +7,9 @@ namespace ChatApp.Models
         [Key]
         public int RoomId { get; set; }
         [Required]
-        public string RoomName { get; set; }
+        public string Name { get; set; }
+        [Required]
+        public string Description { get; set; }
         public virtual ICollection<Message> Messages { get; set; }
         public virtual ICollection<User> Users { get; set; }
     }

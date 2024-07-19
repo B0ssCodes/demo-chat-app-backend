@@ -14,7 +14,7 @@ namespace ChatApp.Repositories
         {
             _db = db;
         }
-        public async Task<LoginResponseDTO> Login(LoginRequestDTO loginDTO)
+        public async Task<User> Login(LoginRequestDTO loginDTO)
         {
 
             User user = await _db.Users.FirstOrDefaultAsync(u => u.Username == loginDTO.Username && u.Password == loginDTO.Password);
@@ -23,19 +23,12 @@ namespace ChatApp.Repositories
             {
                 return null;
             }
-           
-            LoginResponseDTO loginResponseDTO = new LoginResponseDTO()
-            {
-                Username = user.Username,
-                Description = user.Description,
-                Email = user.Email
-
-            };
-            return loginResponseDTO;
+       
+            return user;
        
         }
 
-        public async Task<RegisterResponseDTO> Register(RegisterRequestDTO registerDTO)
+        public async Task<User> Register(RegisterRequestDTO registerDTO)
         {
             User user = await _db.Users.FirstOrDefaultAsync(u => u.Username == registerDTO.Username);
 
@@ -54,17 +47,8 @@ namespace ChatApp.Repositories
 
             await _db.Users.AddAsync(newUser);
             await _db.SaveChangesAsync();
-
-            RegisterResponseDTO registerResponseDTO = new RegisterResponseDTO()
-            {
-                Username = newUser.Username,
-                Description = newUser.Description,
-                Email = newUser.Email
-
-            };
-
             
-            return registerResponseDTO;
+            return newUser;
         }
     }
 }
