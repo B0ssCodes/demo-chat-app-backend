@@ -39,6 +39,11 @@ namespace ChatApp.Repositories
         {
             var messages = _db.Messages.Where(m => m.RoomId == roomId).ToList();
 
+            if (messages == null)
+            {
+                throw new Exception("No messages for this room found!");
+            }
+
             return Task.FromResult(messages.Select(m => new MessageResponseDTO
             {
                 MessageId = m.MessageId,
@@ -52,6 +57,11 @@ namespace ChatApp.Repositories
         public Task<List<MessageResponseDTO>> GetUserMessages(int userId)
         {
             var messages = _db.Messages.Where(m => m.UserId == userId).ToList();
+
+            if (messages == null)
+            {
+                throw new Exception("No messages for this user found!");
+            }
 
             return Task.FromResult(messages.Select(m => new MessageResponseDTO
             {

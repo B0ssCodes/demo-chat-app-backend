@@ -7,5 +7,6 @@ namespace ChatApp.Repositories.Interfaces
     {
         Task<User> Register(RegisterRequestDTO registerDTO);
         Task<User> Login(LoginRequestDTO loginDTO);
+        Task<UserDetailDTO> GetUserDetails (int userId);
     }
 }

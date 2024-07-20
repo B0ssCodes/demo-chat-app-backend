@@ -31,7 +31,7 @@ namespace ChatApp.Repositories
             // Find the room
             var room = await _db.Rooms
                 .Include(r => r.Users) // Include existing users to avoid overwriting them
-                /*.Include(r => r.Messages)*/ // Include messages if you want them in the response
+                .Include(r => r.Messages) // Include messages if you want them in the response
                 .FirstOrDefaultAsync(r => r.RoomId == roomId);
             if (room == null)
             {
@@ -50,21 +50,15 @@ namespace ChatApp.Repositories
                 RoomId = room.RoomId,
                 Name = room.Name,
                 Description = room.Description,
+                MessageCount = room.Messages.Count,
                 Users = room.Users.Select(u => new UserDTO
                 {
                     UserId = u.UserId,
                     Username = u.Username,
                     Email = u.Email,
                     Description = u.Description,
-                    // Map other necessary properties
                 }).ToList(),
-                //Messages = room.Messages.Select(m => new MessageResponseDTO
-                //{
-                //    MessageId = m.MessageId,
-                //    Content = m.Content,
-                //    RoomId = m.RoomId,
-                //    // Map other necessary properties
-                //}).ToList(),
+                
             };
 
             await _chatHub.Clients.Group(roomId.ToString()).SendAsync("UserAddedToRoom", response);
@@ -88,12 +82,14 @@ namespace ChatApp.Repositories
             await _db.Rooms.AddAsync(room);
             await _db.SaveChangesAsync();
 
+          
             // Map Users and Messages to their respective DTOs
             RoomResponseDTO response = new()
             {
                 RoomId = room.RoomId,
                 Name = room.Name,
                 Description = room.Description,
+                MessageCount = room.Messages.Count,
                 Users = room.Users.Select(u => new UserDTO
                 {
                     UserId = u.UserId,
@@ -102,13 +98,6 @@ namespace ChatApp.Repositories
                     Description = u.Description,
                   
                 }).ToList(),
-                //Messages = room.Messages.Select(m => new MessageResponseDTO
-                //{
-                //    MessageId = m.MessageId,
-                //    Content = m.Content,
-                //    RoomId = m.RoomId,
-                   
-                //}).ToList(),
             };
 
             return response;
@@ -119,7 +108,7 @@ namespace ChatApp.Repositories
         {
             Room room = await _db.Rooms
                 .Include(r => r.Users)
-                //.Include(r => r.Messages)
+                .Include(r => r.Messages)
                 .FirstOrDefaultAsync(r => r.RoomId == roomId);
 
             if (room == null)
@@ -132,6 +121,7 @@ namespace ChatApp.Repositories
                 RoomId = room.RoomId,
                 Name = room.Name,
                 Description = room.Description,
+                MessageCount = room.Messages.Count,
                 Users = room.Users.Select(u => new UserDTO
                 {
                     UserId = u.UserId,
@@ -140,13 +130,7 @@ namespace ChatApp.Repositories
                     Description = u.Description,
 
                 }).ToList(),
-                //Messages = room.Messages.Select(m => new MessageResponseDTO
-                //{
-                //    MessageId = m.MessageId,
-                //    Content = m.Content,
-                //    RoomId = m.RoomId,
 
-                //}).ToList(),
             };
 
             return response;
@@ -154,18 +138,24 @@ namespace ChatApp.Repositories
 
         public async Task<List<RoomResponseDTO>> GetRooms()
         {
-            var rooms = await _db.Rooms.Include(r => r.Users)/*.Include(r => r.Messages)*/.ToListAsync();
+            // Fetch rooms with their users and messages to count them
+            var rooms = await _db.Rooms
+                .Include(r => r.Users)
+                .Include(r => r.Messages)
+                .ToListAsync();
 
             if (rooms == null)
             {
                 throw new Exception("Rooms not found");
             }
 
+            // Project each Room to a RoomResponseDTO, including the message count
             var roomDTOs = rooms.Select(room => new RoomResponseDTO
             {
                 RoomId = room.RoomId,
                 Name = room.Name,
                 Description = room.Description,
+                MessageCount = room.Messages.Count,
                 Users = room.Users.Select(user => new UserDTO
                 {
                     UserId = user.UserId,
@@ -173,25 +163,17 @@ namespace ChatApp.Repositories
                     Email = user.Email,
                     Description = user.Description,
                 }).ToList(),
-                //Messages = room.Messages.Select(message => new MessageResponseDTO
-                //{
-                //    MessageId = message.MessageId,
-                //    Content = message.Content,
-                //    RoomId = message.RoomId,
-
-                //}).ToList(),
+             
             });
 
             return roomDTOs.ToList();
-
-
         }
 
         public async Task<List<RoomResponseDTO>> GetRoomsByUser(int userId)
         {
             var rooms = await _db.Rooms
                 .Include(r => r.Users)
-                //.Include(r => r.Messages)
+                .Include(r => r.Messages)
                 .Where(r => r.Users.Any(u => u.UserId == userId))
                 .ToListAsync();
 
@@ -204,6 +186,7 @@ namespace ChatApp.Repositories
                 RoomId = room.RoomId,
                 Name = room.Name,
                 Description = room.Description,
+                MessageCount = room.Messages.Count,
                 Users = room.Users.Select(user => new UserDTO
                 {
                     UserId = user.UserId,
@@ -211,13 +194,7 @@ namespace ChatApp.Repositories
                     Email = user.Email,
                     Description = user.Description,
                 }).ToList(),
-                //Messages = room.Messages.Select(message => new MessageResponseDTO
-                //{
-                //    MessageId = message.MessageId,
-                //    Content = message.Content,
-                //    RoomId = message.RoomId,
-
-                //}).ToList(),
+                
             });
 
             return roomDTOs.ToList();

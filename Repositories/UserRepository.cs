@@ -14,6 +14,48 @@ namespace ChatApp.Repositories
         {
             _db = db;
         }
+
+        public async Task<UserDetailDTO> GetUserDetails(int userId)
+        {
+            var userDetails = await _db.Users
+                .Include(u => u.Rooms)
+                .ThenInclude(r => r.Messages)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (userDetails == null)
+            {
+                throw new Exception("User not found");
+            }
+
+            UserDetailDTO userDetailDTO = new()
+            {
+                UserId = userDetails.UserId,
+                Username = userDetails.Username,
+                Email = userDetails.Email,
+                Description = userDetails.Description,
+                MessageNumber = userDetails.Messages.Count,
+                Rooms = userDetails.Rooms.Select(r => new RoomResponseDTO
+                {
+                    RoomId = r.RoomId,
+                    Name = r.Name,
+                    Description = r.Description,
+                    MessageCount = r.Messages.Count,
+
+                }).ToList(),
+                Messages = userDetails.Messages.Select(m => new MessageResponseDTO
+                {
+                    MessageId = m.MessageId,
+                    Content = m.Content,
+                    RoomId = m.RoomId,
+                    UserId = m.UserId,
+                    Username = m.User.Username
+                }).ToList()
+            };
+
+
+                return userDetailDTO;
+            }
+
         public async Task<User> Login(LoginRequestDTO loginDTO)
         {
 

@@ -102,6 +102,29 @@ namespace ChatApp.Controllers
             return Ok(_response);
         }
 
+        [HttpGet]
+        [Route("UserDetails/{userId}")]
+        public async Task<IActionResult> GetUserDetails(int userId)
+        {
+            UserDetailDTO userDetails = await _userRepository.GetUserDetails(userId);
+            ApiResponse<UserDetailDTO> _response = new ApiResponse<UserDetailDTO>();
+            if (userDetails == null)
+            {
+                _response.Status = HttpStatusCode.NotFound;
+                _response.Success = false;
+                _response.Message = "User not found";
+                _response.Result = null;
+                return NotFound(_response);
+            }
+
+            _response.Status = HttpStatusCode.OK;
+            _response.Success = true;
+            _response.Message = "User details found";
+            _response.Result = userDetails;
+            return Ok(_response);
+            
+        }
+
 
     }
 }
