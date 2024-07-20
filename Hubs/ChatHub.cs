@@ -34,6 +34,8 @@ namespace ChatApp.Hubs
 
             await base.OnConnectedAsync();
         }
+
+
         public async Task SendMessage(int userId, int roomId, string messageContent)
         {
             User user = await _db.Users.FindAsync(userId);
@@ -64,6 +66,11 @@ namespace ChatApp.Hubs
 
             // Broadcast the message to all clients in the room
             await Clients.Group(roomId.ToString()).SendAsync("ReceiveMessage", newMessage);
+
+            foreach (var member in room.Users)
+            {
+                await Clients.User(member.UserId.ToString()).SendAsync("IncrementPendingMessages", roomId);
+            }
         }
 
     }
