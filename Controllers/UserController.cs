@@ -103,7 +103,7 @@ namespace ChatApp.Controllers
         }
 
         [HttpGet]
-        [Route("UserDetails/{userId}")]
+        [Route("userDetails/{userId}")]
         public async Task<IActionResult> GetUserDetails(int userId)
         {
             UserDetailDTO userDetails = await _userRepository.GetUserDetails(userId);

@@ -19,7 +19,7 @@ namespace ChatApp.Repositories
             _chatHub = chatHub;
         }
 
-        public async Task AddUserToRoom(int userId, int roomId)
+        public async Task<RoomResponseDTO> AddUserToRoom(int userId, int roomId)
         {
             // Find the user
             var user = await _db.Users.FindAsync(userId);
@@ -36,6 +36,12 @@ namespace ChatApp.Repositories
             if (room == null)
             {
                 throw new Exception("Room not found");
+            }
+
+            // Check if the user is already in the room
+            if (room.Users.Any(u => u.UserId == userId))
+            {
+                throw new Exception("User is already in the room");
             }
 
             // Add the user to the room
@@ -58,10 +64,10 @@ namespace ChatApp.Repositories
                     Email = u.Email,
                     Description = u.Description,
                 }).ToList(),
-                
-            };
 
+            };
             await _chatHub.Clients.Group(roomId.ToString()).SendAsync("UserAddedToRoom", response);
+            return response;
         }
 
         public async Task<RoomResponseDTO> CreateRoom(RoomRequestDTO roomDTO)

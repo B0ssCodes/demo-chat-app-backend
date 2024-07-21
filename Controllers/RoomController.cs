@@ -95,23 +95,23 @@ namespace ChatApp.Controllers
 
         [HttpPost]
         [Route("addUserToRoom")]
-        public async Task<IActionResult> AddUserToRoom(int userId, int roomId)
+        public async Task<IActionResult> AddUserToRoom(RoomJoinDTO roomDTO)
         {
             ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
             try
             {
-                await _roomRepository.AddUserToRoom(userId, roomId);
+               RoomResponseDTO roomResponseDTO =  await _roomRepository.AddUserToRoom(roomDTO.UserId, roomDTO.RoomId);
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
                 _response.Message = "User added to room successfully";
-                _response.Result = null;
+                _response.Result = roomResponseDTO;
                 return Ok(_response);
             }
             catch (Exception ex)
             {
                 _response.Status = HttpStatusCode.Forbidden;
                 _response.Success = false;
-                _response.Message = $"Error: {ex.Message}";
+                _response.Message = $"{ex.Message}";
                 _response.Result = null;
                 return NotFound(_response);
             }
