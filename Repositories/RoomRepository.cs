@@ -100,6 +100,8 @@ namespace ChatApp.Repositories
                 }).ToList(),
             };
 
+            await _chatHub.Clients.User(roomDTO.UserId.ToString()).SendAsync("RoomCreated", response);
+
             return response;
         }
 

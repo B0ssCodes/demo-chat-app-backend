@@ -1,7 +1,9 @@
 ﻿using ChatApp.Data;
 using ChatApp.DataService;
 using ChatApp.Models;
+using ChatApp.Models.Dto;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChatApp.Hubs
 {
@@ -17,20 +19,24 @@ namespace ChatApp.Hubs
         public override async Task OnConnectedAsync()
         {
             var httpContext = Context.GetHttpContext();
+          
             var userIdString = httpContext.Request.Query["userId"];
-            if (!int.TryParse(userIdString, out int userId))
+            var roomIdString = httpContext.Request.Query["roomId"];
+
+            if (!int.TryParse(userIdString, out int userId) || !int.TryParse(roomIdString, out int roomId))
             {
-                throw new Exception("Invalid user ID");
+                throw new Exception("Invalid user ID or room ID");
             }
 
-            // Query the database for all rooms the user is a part of
-            var userRooms = _db.Rooms.Where(r => r.Users.Any(u => u.UserId == userId));
-
-            // Add the user to each room's SignalR group
-            foreach (var room in userRooms)
+            // Optionally, verify that the user is a member of the specified room
+            var isUserInRoom = _db.Rooms.Any(r => r.RoomId == roomId && r.Users.Any(u => u.UserId == userId));
+            if (!isUserInRoom)
             {
-                await Groups.AddToGroupAsync(Context.ConnectionId, room.RoomId.ToString());
+                throw new Exception("User is not a member of the specified room");
             }
+
+            // Connect the user to the specified room's SignalR group
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
 
             await base.OnConnectedAsync();
         }
@@ -38,40 +44,64 @@ namespace ChatApp.Hubs
 
         public async Task SendMessage(int userId, int roomId, string messageContent)
         {
-            User user = await _db.Users.FindAsync(userId);
-
-            if (user == null)
+            try
             {
-                throw new Exception("User not found");
+
+                User user = await _db.Users.FindAsync(userId);
+
+                if (user == null)
+                {
+                    throw new Exception("User not found");
+                }
+
+                Room room = await _db.Rooms
+                                      .Include(r => r.Users)
+                                      .FirstOrDefaultAsync(r => r.RoomId == roomId);
+                if (room == null)
+                {
+                    throw new Exception("Room not found");
+                }
+
+                // Create a new message object to save to the database
+                Message newMessage = new Message
+                {
+                    UserId = userId,
+                    RoomId = roomId,
+                    Content = messageContent,
+                    Timestamp = DateTime.UtcNow // Consider using UTC for consistency
+                };
+
+                // Save the new message to the database
+                await _db.Messages.AddAsync(newMessage);
+                await _db.SaveChangesAsync();
+
+                // Broadcast the message to all clients in the room
+
+                MessageResponseDTO messageDTO = new()
+                {
+                    MessageId = newMessage.MessageId,
+                    Content = newMessage.Content,
+                    UserId = newMessage.UserId,
+                    Username = user.Username,
+                    RoomId = newMessage.RoomId,
+                    Timestamp = newMessage.Timestamp
+
+                };
+
+                await Clients.Group(roomId.ToString()).SendAsync("ReceiveMessage", messageDTO);
+
+                foreach (var member in room.Users)
+                {
+                    await Clients.User(member.UserId.ToString()).SendAsync("IncrementPendingMessages", roomId);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
 
-            Room room = await _db.Rooms.FindAsync(roomId);
-            if (room == null)
-            {
-                throw new Exception("Room not found");
-            }
-
-            // Create a new message object to save to the database
-            Message newMessage = new Message
-            {
-                UserId = userId,
-                RoomId = roomId,
-                Content = messageContent,
-                Timestamp = DateTime.UtcNow // Consider using UTC for consistency
-            };
-
-            // Save the new message to the database
-            await _db.Messages.AddAsync(newMessage);
-            await _db.SaveChangesAsync();
-
-            // Broadcast the message to all clients in the room
-            await Clients.Group(roomId.ToString()).SendAsync("ReceiveMessage", newMessage);
-
-            foreach (var member in room.Users)
-            {
-                await Clients.User(member.UserId.ToString()).SendAsync("IncrementPendingMessages", roomId);
-            }
         }
+
 
     }
 }

@@ -70,7 +70,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Add the SignalR hub to the middleware using the /Chat path
-app.MapHub<ChatHub>("/Chat");
+app.MapHub<ChatHub>("/chat");
 app.MapControllers();
 
 app.Run();

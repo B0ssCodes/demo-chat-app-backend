@@ -19,7 +19,7 @@ namespace ChatApp.Repositories
         {
             var userDetails = await _db.Users
                 .Include(u => u.Rooms)
-                .ThenInclude(r => r.Messages)
+                    .ThenInclude(r => r.Messages)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
 
             if (userDetails == null)
@@ -33,30 +33,29 @@ namespace ChatApp.Repositories
                 Username = userDetails.Username,
                 Email = userDetails.Email,
                 Description = userDetails.Description,
-                MessageNumber = userDetails.Messages.Count,
-                Rooms = userDetails.Rooms.Select(r => new RoomResponseDTO
+                MessageNumber = userDetails.Messages?.Count ?? 0,
+                Rooms = userDetails.Rooms?.Select(r => new RoomResponseDTO
                 {
                     RoomId = r.RoomId,
                     Name = r.Name,
                     Description = r.Description,
-                    MessageCount = r.Messages.Count,
+                    MessageCount = r.Messages?.Count ?? 0,
 
-                }).ToList(),
-                Messages = userDetails.Messages.Select(m => new MessageResponseDTO
+                }).ToList() ?? new List<RoomResponseDTO>(),
+                Messages = userDetails.Messages?.Select(m => new MessageResponseDTO
                 {
                     MessageId = m.MessageId,
                     Content = m.Content,
                     RoomId = m.RoomId,
                     UserId = m.UserId,
-                    Username = m.User.Username
-                }).ToList()
+                    Username = m.User?.Username 
+                }).ToList() ?? new List<MessageResponseDTO>()
             };
 
+            return userDetailDTO;
+        }
 
-                return userDetailDTO;
-            }
-
-        public async Task<User> Login(LoginRequestDTO loginDTO)
+            public async Task<User> Login(LoginRequestDTO loginDTO)
         {
 
             User user = await _db.Users.FirstOrDefaultAsync(u => u.Username == loginDTO.Username && u.Password == loginDTO.Password);

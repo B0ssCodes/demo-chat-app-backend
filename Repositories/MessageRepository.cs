@@ -2,6 +2,7 @@
 using ChatApp.Models;
 using ChatApp.Models.Dto;
 using ChatApp.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChatApp.Repositories
 {
@@ -35,28 +36,34 @@ namespace ChatApp.Repositories
             };
         }
 
-        public Task<List<MessageResponseDTO>> GetRoomMessages(int roomId)
+        public async Task<List<MessageResponseDTO>> GetRoomMessages(int roomId)
         {
-            var messages = _db.Messages.Where(m => m.RoomId == roomId).ToList();
+            var messages = await _db.Messages
+                                    .Include(m => m.User)
+                                    .Where(m => m.RoomId == roomId)
+                                    .OrderBy(m => m.Timestamp) 
+                                    .Select(m => new MessageResponseDTO
+                                    {
+                                        MessageId = m.MessageId,
+                                        Content = m.Content,
+                                        UserId = m.UserId,
+                                        Username = m.User.Username,
+                                        RoomId = m.RoomId,
+                                        Timestamp = m.Timestamp
+                                    })
+                                    .ToListAsync();
 
-            if (messages == null)
+            if (messages == null || !messages.Any())
             {
                 throw new Exception("No messages for this room found!");
             }
 
-            return Task.FromResult(messages.Select(m => new MessageResponseDTO
-            {
-                MessageId = m.MessageId,
-                Content = m.Content,
-                UserId = m.UserId,
-                RoomId = m.RoomId,
-                Timestamp = m.Timestamp
-            }).ToList());
+            return messages;
         }
 
         public Task<List<MessageResponseDTO>> GetUserMessages(int userId)
         {
-            var messages = _db.Messages.Where(m => m.UserId == userId).ToList();
+            var messages = _db.Messages.Include(m => m.User).Where(m => m.UserId == userId).ToList();
 
             if (messages == null)
             {
@@ -68,6 +75,7 @@ namespace ChatApp.Repositories
                 MessageId = m.MessageId,
                 Content = m.Content,
                 UserId = m.UserId,
+                Username = m.User.Username,
                 RoomId = m.RoomId,
                 Timestamp = m.Timestamp
             }).ToList());
