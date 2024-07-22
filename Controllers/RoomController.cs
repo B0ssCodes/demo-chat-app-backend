@@ -45,6 +45,30 @@ namespace ChatApp.Controllers
         }
 
         [HttpGet]
+        [Route("getRoom/{roomId}")]
+        public async Task<IActionResult> GetRoom(int roomId)
+        {
+            ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
+            try
+            {
+                RoomResponseDTO roomResponseDTO = await _roomRepository.GetRoom(roomId);
+                _response.Status = HttpStatusCode.OK;
+                _response.Success = true;
+                _response.Message = "Room retrieved successfully";
+                _response.Result = roomResponseDTO;
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.Status = HttpStatusCode.NotFound;
+                _response.Success = false;
+                _response.Message = $"Error: {ex.Message}";
+                _response.Result = null;
+                return NotFound(_response);
+            }
+        }
+
+        [HttpGet]
         [Route("getRoomsByUser/{userId}")]
         public async Task<IActionResult> GetRoomsByUser(int userId)
         {
@@ -105,6 +129,31 @@ namespace ChatApp.Controllers
                 _response.Success = true;
                 _response.Message = "User added to room successfully";
                 _response.Result = roomResponseDTO;
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.Status = HttpStatusCode.Forbidden;
+                _response.Success = false;
+                _response.Message = $"{ex.Message}";
+                _response.Result = null;
+                return NotFound(_response);
+            }
+
+        }
+
+        [HttpPost]
+        [Route("removeUserFromRoom")]
+        public async Task<IActionResult> RemoveUserFromRoom(RoomJoinDTO roomDTO)
+        {
+            ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
+            try
+            {
+                await _roomRepository.RemoveUserFromRoom(roomDTO.UserId, roomDTO.RoomId);
+                _response.Status = HttpStatusCode.OK;
+                _response.Success = true;
+                _response.Message = "User removed from room successfully";
+                _response.Result = null;
                 return Ok(_response);
             }
             catch (Exception ex)

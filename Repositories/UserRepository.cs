@@ -15,46 +15,6 @@ namespace ChatApp.Repositories
             _db = db;
         }
 
-        public async Task<UserDetailDTO> GetUserDetails(int userId)
-        {
-            var userDetails = await _db.Users
-                .Include(u => u.Rooms)
-                    .ThenInclude(r => r.Messages)
-                .FirstOrDefaultAsync(u => u.UserId == userId);
-
-            if (userDetails == null)
-            {
-                throw new Exception("User not found");
-            }
-
-            UserDetailDTO userDetailDTO = new()
-            {
-                UserId = userDetails.UserId,
-                Username = userDetails.Username,
-                Email = userDetails.Email,
-                Description = userDetails.Description,
-                MessageNumber = userDetails.Messages?.Count ?? 0,
-                Rooms = userDetails.Rooms?.Select(r => new RoomResponseDTO
-                {
-                    RoomId = r.RoomId,
-                    Name = r.Name,
-                    Description = r.Description,
-                    MessageCount = r.Messages?.Count ?? 0,
-
-                }).ToList() ?? new List<RoomResponseDTO>(),
-                Messages = userDetails.Messages?.Select(m => new MessageResponseDTO
-                {
-                    MessageId = m.MessageId,
-                    Content = m.Content,
-                    RoomId = m.RoomId,
-                    UserId = m.UserId,
-                    Username = m.User?.Username 
-                }).ToList() ?? new List<MessageResponseDTO>()
-            };
-
-            return userDetailDTO;
-        }
-
             public async Task<User> Login(LoginRequestDTO loginDTO)
         {
 
@@ -90,6 +50,58 @@ namespace ChatApp.Repositories
             await _db.SaveChangesAsync();
             
             return newUser;
+        }
+
+        public async Task<UserDetailDTO> GetUserDetails(int userId)
+        {
+            var userDetails = await _db.Users
+                .Include(u => u.Rooms)
+                    .ThenInclude(r => r.Messages)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (userDetails == null)
+            {
+                throw new Exception("User not found");
+            }
+
+            UserDetailDTO userDetailDTO = new()
+            {
+                UserId = userDetails.UserId,
+                Username = userDetails.Username,
+                Email = userDetails.Email,
+                Description = userDetails.Description,
+            };
+
+            return userDetailDTO;
+        }
+
+        public async Task UpdateUserDetails(UserDetailDTO userDetailDTO)
+        {
+            User user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userDetailDTO.UserId);
+            if (user == null)
+            {
+                throw new Exception("User does not exist");
+            }
+
+            // Check if the username already exists for another user
+            bool usernameExists = await _db.Users.AnyAsync(u => u.UserId != userDetailDTO.UserId && u.Username == userDetailDTO.Username);
+            if (usernameExists)
+            {
+                throw new Exception("Username already exists");
+            }
+
+            // Check if the email already exists for another user
+            bool emailExists = await _db.Users.AnyAsync(u => u.UserId != userDetailDTO.UserId && u.Email == userDetailDTO.Email);
+            if (emailExists)
+            {
+                throw new Exception("Email already exists");
+            }
+
+            user.Username = userDetailDTO.Username;
+            user.Email = userDetailDTO.Email;
+            user.Description = userDetailDTO.Description;
+
+            await _db.SaveChangesAsync();
         }
     }
 }

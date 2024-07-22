@@ -30,33 +30,34 @@ namespace ChatApp.Repositories
 
             // Find the room
             var room = await _db.Rooms
-                .Include(r => r.Users) // Include existing users to avoid overwriting them
-                .Include(r => r.Messages) // Include messages if you want them in the response
+                .Include(r => r.Users) 
+                .Include(r => r.Messages) 
                 .FirstOrDefaultAsync(r => r.RoomId == roomId);
             if (room == null)
             {
                 throw new Exception("Room not found");
             }
 
-            // Check if the user is already in the room
+            
             if (room.Users.Any(u => u.UserId == userId))
             {
                 throw new Exception("User is already in the room");
             }
 
-            // Add the user to the room
+       
             room.Users.Add(user);
 
-            // Save changes to the database
+
             await _db.SaveChangesAsync();
 
-            // Map the updated room to RoomResponseDTO
+
             RoomResponseDTO response = new RoomResponseDTO
             {
                 RoomId = room.RoomId,
                 Name = room.Name,
                 Description = room.Description,
                 MessageCount = room.Messages.Count,
+                UserCount = room.Users.Count,
                 Users = room.Users.Select(u => new UserDTO
                 {
                     UserId = u.UserId,
@@ -69,6 +70,8 @@ namespace ChatApp.Repositories
             await _chatHub.Clients.Group(roomId.ToString()).SendAsync("UserAddedToRoom", response);
             return response;
         }
+
+        
 
         public async Task<RoomResponseDTO> CreateRoom(RoomRequestDTO roomDTO)
         {
@@ -89,13 +92,14 @@ namespace ChatApp.Repositories
             await _db.SaveChangesAsync();
 
           
-            // Map Users and Messages to their respective DTOs
+  
             RoomResponseDTO response = new()
             {
                 RoomId = room.RoomId,
                 Name = room.Name,
                 Description = room.Description,
                 MessageCount = room.Messages.Count,
+                UserCount = room.Users.Count,
                 Users = room.Users.Select(u => new UserDTO
                 {
                     UserId = u.UserId,
@@ -130,6 +134,7 @@ namespace ChatApp.Repositories
                 Name = room.Name,
                 Description = room.Description,
                 MessageCount = room.Messages.Count,
+                UserCount = room.Users.Count,
                 Users = room.Users.Select(u => new UserDTO
                 {
                     UserId = u.UserId,
@@ -146,7 +151,7 @@ namespace ChatApp.Repositories
 
         public async Task<List<RoomResponseDTO>> GetRooms()
         {
-            // Fetch rooms with their users and messages to count them
+
             var rooms = await _db.Rooms
                 .Include(r => r.Users)
                 .Include(r => r.Messages)
@@ -157,13 +162,13 @@ namespace ChatApp.Repositories
                 throw new Exception("Rooms not found");
             }
 
-            // Project each Room to a RoomResponseDTO, including the message count
             var roomDTOs = rooms.Select(room => new RoomResponseDTO
             {
                 RoomId = room.RoomId,
                 Name = room.Name,
                 Description = room.Description,
                 MessageCount = room.Messages.Count,
+                UserCount = room.Users.Count,
                 Users = room.Users.Select(user => new UserDTO
                 {
                     UserId = user.UserId,
@@ -195,6 +200,7 @@ namespace ChatApp.Repositories
                 Name = room.Name,
                 Description = room.Description,
                 MessageCount = room.Messages.Count,
+                UserCount = room.Users.Count,
                 Users = room.Users.Select(user => new UserDTO
                 {
                     UserId = user.UserId,
@@ -206,6 +212,38 @@ namespace ChatApp.Repositories
             });
 
             return roomDTOs.ToList();
+        }
+
+        public async Task RemoveUserFromRoom(int userId, int roomId)
+        {
+
+            User user = await _db.Users.FindAsync(userId);
+            if (user == null)
+            {
+                throw new Exception("User not found");
+            }
+
+            // Find the room
+            var room = await _db.Rooms
+                .Include(r => r.Users) 
+                .Include(r => r.Messages) 
+                .FirstOrDefaultAsync(r => r.RoomId == roomId);
+            if (room == null)
+            {
+                throw new Exception("Room not found");
+            }
+
+     
+            if (!room.Users.Any(u => u.UserId == userId))
+            {
+                throw new Exception("User is not in the room");
+            }
+
+
+            room.Users.Remove(user);
+            await _db.SaveChangesAsync();
+
+            return;
         }
     }
 }

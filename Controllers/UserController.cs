@@ -125,6 +125,35 @@ namespace ChatApp.Controllers
             
         }
 
+        [HttpPut]
+        [Route("updateUserDetails")]
+        public async Task<IActionResult> UpdateUserDetails([FromBody] UserDetailDTO userDetailDTO)
+        {
+            try
+            {
+                await _userRepository.UpdateUserDetails(userDetailDTO);
+                ApiResponse<UserDetailDTO> _response = new ApiResponse<UserDetailDTO>
+                {
+                    Status = HttpStatusCode.OK,
+                    Success = true,
+                    Message = "User details updated successfully!",
+                    Result = userDetailDTO
+                };
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                ApiResponse<UserDetailDTO> _response = new ApiResponse<UserDetailDTO>
+                {
+                    Status = HttpStatusCode.NotFound,
+                    Success = false,
+                    Message = ex.Message,
+                    Result = null
+                };
+                return BadRequest(_response);
+            }
+        }
+
 
     }
 }
