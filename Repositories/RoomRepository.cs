@@ -71,8 +71,6 @@ namespace ChatApp.Repositories
             return response;
         }
 
-        
-
         public async Task<RoomResponseDTO> CreateRoom(RoomRequestDTO roomDTO)
         {
             User user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == roomDTO.UserId);
@@ -216,7 +214,6 @@ namespace ChatApp.Repositories
 
         public async Task RemoveUserFromRoom(int userId, int roomId)
         {
-
             User user = await _db.Users.FindAsync(userId);
             if (user == null)
             {
@@ -225,25 +222,28 @@ namespace ChatApp.Repositories
 
             // Find the room
             var room = await _db.Rooms
-                .Include(r => r.Users) 
-                .Include(r => r.Messages) 
+                .Include(r => r.Users)
+                .Include(r => r.Messages)
                 .FirstOrDefaultAsync(r => r.RoomId == roomId);
             if (room == null)
             {
                 throw new Exception("Room not found");
             }
 
-     
             if (!room.Users.Any(u => u.UserId == userId))
             {
                 throw new Exception("User is not in the room");
             }
 
-
             room.Users.Remove(user);
-            await _db.SaveChangesAsync();
 
-            return;
+            // if the room is empty, delete it
+            if (room.Users.Count == 0)
+            {
+                _db.Rooms.Remove(room);
+            }
+
+            await _db.SaveChangesAsync();
         }
     }
 }

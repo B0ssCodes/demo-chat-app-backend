@@ -29,7 +29,8 @@ namespace ChatApp.Controllers
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginDTO)
         {
-            var user = await _userRepository.Login(loginDTO);
+            // Pass the login request to the repository, it will return the user if found
+            User user = await _userRepository.Login(loginDTO);
             ApiResponse<LoginResponseDTO> _response = new ApiResponse<LoginResponseDTO>();
             if (user == null)
             {
@@ -40,30 +41,29 @@ namespace ChatApp.Controllers
                 return Unauthorized(_response);
             }
 
-            // Generate JWT token
+            // Generate a JWT token
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]); // Use the secret key from appsettings.json
+            // Get the key from appssettings.json
+            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]); 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
                 {
+            // Add the userId and username to the token
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Name, user.Username)
-            // ADD MORE CLAIMS
         }),
-                Expires = DateTime.UtcNow.AddDays(14), // Token expiration
+                Expires = DateTime.UtcNow.AddDays(7), // Token expiration
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            // Append the token to the response
             _response.Status = HttpStatusCode.OK;
             _response.Success = true;
             _response.Message = "Login successful";
             _response.Result = new LoginResponseDTO
             {
-                // Assuming LoginResponseDTO can hold a token, otherwise adjust accordingly
                 Token = tokenString,
                 UserId = user.UserId,
                 Username = user.Username,
@@ -78,7 +78,8 @@ namespace ChatApp.Controllers
         [Route("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO registerDTO)
         {
-            var user = await _userRepository.Register(registerDTO);
+            // Pass the register request to the repository, it will return the user if successful
+            User user = await _userRepository.Register(registerDTO);
             ApiResponse<RegisterResponseDTO> _response = new ApiResponse<RegisterResponseDTO>();
             if (user == null)
             {
@@ -89,21 +90,15 @@ namespace ChatApp.Controllers
                 return Conflict(_response);
             }
 
-            RegisterResponseDTO responseDTO = new RegisterResponseDTO
-            {
-                Username = user.Username,
-                Email = user.Email,
-                Description = user.Description
-            };
             _response.Status = HttpStatusCode.OK;
             _response.Success = true;
             _response.Message = "Register successful";
-            _response.Result = responseDTO;
+            _response.Result = null;
             return Ok(_response);
         }
 
         [HttpGet]
-        [Route("userDetails/{userId}")]
+        [Route("getUserDetails/{userId}")]
         public async Task<IActionResult> GetUserDetails(int userId)
         {
             UserDetailDTO userDetails = await _userRepository.GetUserDetails(userId);

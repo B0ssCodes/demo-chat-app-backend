@@ -11,7 +11,8 @@ namespace ChatApp.Models
         [Required]
         public string Email { get; set; }
         [Required]
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
+        public string PasswordSalt { get; set; }    
         
         public string Description { get; set; }
         public virtual ICollection<Message> Messages { get; set; }

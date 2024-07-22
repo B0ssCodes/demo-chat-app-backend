@@ -2,7 +2,9 @@
 using ChatApp.Models;
 using ChatApp.Models.Dto;
 using ChatApp.Repositories.Interfaces;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace ChatApp.Repositories
 {
@@ -15,40 +17,72 @@ namespace ChatApp.Repositories
             _db = db;
         }
 
-            public async Task<User> Login(LoginRequestDTO loginDTO)
+        public async Task<User> Login(LoginRequestDTO loginDTO)
         {
-
-            User user = await _db.Users.FirstOrDefaultAsync(u => u.Username == loginDTO.Username && u.Password == loginDTO.Password);
+            User user = await _db.Users.FirstOrDefaultAsync(u => u.Username == loginDTO.Username);
 
             if (user == null)
             {
-                return null;
+                return null; // User not found
             }
-       
-            return user;
-       
+
+            // Retrieve the salt for the user and hash the provided password
+            byte[] salt = Convert.FromBase64String(user.PasswordSalt);
+            string hashedPassword = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                password: loginDTO.Password,
+                salt: salt,
+                prf: KeyDerivationPrf.HMACSHA256,
+                iterationCount: 100000,
+                numBytesRequested: 256 / 8));
+
+            // Compare the hashed password with the stored hash
+            if (hashedPassword == user.PasswordHash)
+            {
+                return user; // Password is correct
+            }
+            else
+            {
+                return null; // Password is incorrect
+            }
         }
 
         public async Task<User> Register(RegisterRequestDTO registerDTO)
         {
-            User user = await _db.Users.FirstOrDefaultAsync(u => u.Username == registerDTO.Username);
+            User existingUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == registerDTO.Username);
 
-            if (user != null)
+            if (existingUser != null)
             {
-                return null;
+                return null; // Username already exists
             }
+
+            // Generate a unique salt
+            byte[] salt = new byte[128 / 8];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(salt);
+            }
+            string saltString = Convert.ToBase64String(salt);
+
+            // Hash the password with the salt
+            string hashedPassword = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                password: registerDTO.Password,
+                salt: salt,
+                prf: KeyDerivationPrf.HMACSHA256,
+                iterationCount: 100000,
+                numBytesRequested: 256 / 8));
 
             User newUser = new User
             {
                 Username = registerDTO.Username,
                 Email = registerDTO.Email,
                 Description = registerDTO.Description,
-                Password = registerDTO.Password
+                PasswordHash = hashedPassword,
+                PasswordSalt = saltString
             };
 
             await _db.Users.AddAsync(newUser);
             await _db.SaveChangesAsync();
-            
+
             return newUser;
         }
 
