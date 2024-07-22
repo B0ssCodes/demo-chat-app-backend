@@ -24,6 +24,7 @@ namespace ChatApp.Controllers
             ApiResponse<MessageResponseDTO> _response = new();
             try
             {
+                // Create message and await the response from the repository
                 MessageResponseDTO message = await _messageRepository.CreateMessage(messageDTO);
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
@@ -34,7 +35,8 @@ namespace ChatApp.Controllers
 
             catch (Exception ex)
             {
-                _response.Status = HttpStatusCode.InternalServerError;
+                // Catch any exception and return a bad request with the error message
+                _response.Status = HttpStatusCode.BadRequest;
                 _response.Success = false;
                 _response.Message = ex.Message;
                 _response.Result = null;
@@ -51,6 +53,7 @@ namespace ChatApp.Controllers
             ApiResponse<List<MessageResponseDTO>> _response = new();
             try
             {
+                // Get messages based on the roomId fron the repository
                 List<MessageResponseDTO> messages = await _messageRepository.GetRoomMessages(roomId);
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
@@ -60,6 +63,7 @@ namespace ChatApp.Controllers
             }
             catch (Exception ex)
             {
+                // Catch any exception and return a not found with the error message
                 _response.Status = HttpStatusCode.NotFound;
                 _response.Success = false;
                 _response.Message = ex.Message;
@@ -76,6 +80,7 @@ namespace ChatApp.Controllers
             ApiResponse<List<MessageResponseDTO>> _response = new();
             try
             {
+                // Get messages based on the userId fron the repository
                 List<MessageResponseDTO> messages = await _messageRepository.GetUserMessages(userId);
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
@@ -85,6 +90,7 @@ namespace ChatApp.Controllers
             }
             catch (Exception ex)
             {
+                // Catch any exception and return a not found with the error message
                 _response.Status = HttpStatusCode.NotFound;
                 _response.Success = false;
                 _response.Message = ex.Message;

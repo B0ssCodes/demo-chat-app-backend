@@ -80,7 +80,10 @@ namespace ChatApp.Controllers
         {
             // Pass the register request to the repository, it will return the user if successful
             User user = await _userRepository.Register(registerDTO);
+
             ApiResponse<RegisterResponseDTO> _response = new ApiResponse<RegisterResponseDTO>();
+
+            // If the user is null, the user already exists
             if (user == null)
             {
                 _response.Status = HttpStatusCode.AlreadyReported;
@@ -90,6 +93,7 @@ namespace ChatApp.Controllers
                 return Conflict(_response);
             }
 
+            // Populate the api response
             _response.Status = HttpStatusCode.OK;
             _response.Success = true;
             _response.Message = "Register successful";
@@ -103,6 +107,8 @@ namespace ChatApp.Controllers
         {
             UserDetailDTO userDetails = await _userRepository.GetUserDetails(userId);
             ApiResponse<UserDetailDTO> _response = new ApiResponse<UserDetailDTO>();
+
+            // If the userDetails are null, the user does not exist
             if (userDetails == null)
             {
                 _response.Status = HttpStatusCode.NotFound;
@@ -111,7 +117,7 @@ namespace ChatApp.Controllers
                 _response.Result = null;
                 return NotFound(_response);
             }
-
+            // Populate the api response
             _response.Status = HttpStatusCode.OK;
             _response.Success = true;
             _response.Message = "User details found";
@@ -126,6 +132,7 @@ namespace ChatApp.Controllers
         {
             try
             {
+
                 await _userRepository.UpdateUserDetails(userDetailDTO);
                 ApiResponse<UserDetailDTO> _response = new ApiResponse<UserDetailDTO>
                 {

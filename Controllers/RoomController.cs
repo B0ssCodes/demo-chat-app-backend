@@ -25,6 +25,7 @@ namespace ChatApp.Controllers
             ApiResponse<List<RoomResponseDTO>> _response = new ApiResponse<List<RoomResponseDTO>>();
             try
             {
+                // Get all rooms from the repository and populate the API response
                 List<RoomResponseDTO> roomResponseDTOs = await _roomRepository.GetRooms();
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
@@ -34,6 +35,7 @@ namespace ChatApp.Controllers
             }
             catch (Exception ex)
             {
+                // If an error occurs populate the API response with the error message
                 _response.Status = HttpStatusCode.NotFound;
                 _response.Success = false;
                 _response.Message = $"Error: {ex.Message}";
@@ -51,6 +53,7 @@ namespace ChatApp.Controllers
             ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
             try
             {
+                // Get the room from the repository and populate the API response
                 RoomResponseDTO roomResponseDTO = await _roomRepository.GetRoom(roomId);
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
@@ -60,6 +63,7 @@ namespace ChatApp.Controllers
             }
             catch (Exception ex)
             {
+                // If an error occurs populate the API response with the error message
                 _response.Status = HttpStatusCode.NotFound;
                 _response.Success = false;
                 _response.Message = $"Error: {ex.Message}";
@@ -75,6 +79,7 @@ namespace ChatApp.Controllers
             ApiResponse<List<RoomResponseDTO>> _response = new ApiResponse<List<RoomResponseDTO>>();
             try
             {
+                // Get all rooms from the repository and populate the API response
                 List<RoomResponseDTO> roomResponseDTOs = await _roomRepository.GetRoomsByUser(userId);
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
@@ -84,6 +89,7 @@ namespace ChatApp.Controllers
             }
             catch (Exception ex)
             {
+                // If an error occurs populate the API response with the error message
                 _response.Status = HttpStatusCode.NotFound;
                 _response.Success = false;
                 _response.Message = $"Error: {ex.Message}";
@@ -99,6 +105,7 @@ namespace ChatApp.Controllers
             ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
             try
             {
+                // Create a room in the repository and populate the API response
                 RoomResponseDTO roomResponseDTO = await _roomRepository.CreateRoom(roomDTO);
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
@@ -108,6 +115,7 @@ namespace ChatApp.Controllers
             }
             catch (Exception ex)
             {
+                // If an error occurs populate the API response with the error message
                 _response.Status = HttpStatusCode.Forbidden;
                 _response.Success = false;
                 _response.Message = $"Error: {ex.Message}";
@@ -124,6 +132,7 @@ namespace ChatApp.Controllers
             ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
             try
             {
+                // Add a user to a room in the repository and populate the API response
                RoomResponseDTO roomResponseDTO =  await _roomRepository.AddUserToRoom(roomDTO.UserId, roomDTO.RoomId);
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
@@ -133,6 +142,7 @@ namespace ChatApp.Controllers
             }
             catch (Exception ex)
             {
+                // If an error occurs populate the API response with the error message
                 _response.Status = HttpStatusCode.Forbidden;
                 _response.Success = false;
                 _response.Message = $"{ex.Message}";
@@ -149,6 +159,7 @@ namespace ChatApp.Controllers
             ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
             try
             {
+                // Remove a user from a room in the repository
                 await _roomRepository.RemoveUserFromRoom(roomDTO.UserId, roomDTO.RoomId);
                 _response.Status = HttpStatusCode.OK;
                 _response.Success = true;
@@ -158,6 +169,7 @@ namespace ChatApp.Controllers
             }
             catch (Exception ex)
             {
+                // If an error occurs populate the API response with the error message
                 _response.Status = HttpStatusCode.Forbidden;
                 _response.Success = false;
                 _response.Message = $"{ex.Message}";

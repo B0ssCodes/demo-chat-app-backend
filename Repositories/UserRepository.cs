@@ -19,6 +19,7 @@ namespace ChatApp.Repositories
 
         public async Task<User> Login(LoginRequestDTO loginDTO)
         {
+            // Search for the user in db
             User user = await _db.Users.FirstOrDefaultAsync(u => u.Username == loginDTO.Username);
 
             if (user == null)
@@ -26,7 +27,7 @@ namespace ChatApp.Repositories
                 return null; // User not found
             }
 
-            // Retrieve the salt for the user and hash the provided password
+            // Retrieve the salt for the user and hash the provided password (copilot)
             byte[] salt = Convert.FromBase64String(user.PasswordSalt);
             string hashedPassword = Convert.ToBase64String(KeyDerivation.Pbkdf2(
                 password: loginDTO.Password,
@@ -38,7 +39,7 @@ namespace ChatApp.Repositories
             // Compare the hashed password with the stored hash
             if (hashedPassword == user.PasswordHash)
             {
-                return user; // Password is correct
+                return user; // Password is correct, return the user to controller
             }
             else
             {
@@ -111,26 +112,28 @@ namespace ChatApp.Repositories
 
         public async Task UpdateUserDetails(UserDetailDTO userDetailDTO)
         {
+            // Get the user from the database
             User user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userDetailDTO.UserId);
             if (user == null)
             {
                 throw new Exception("User does not exist");
             }
 
-            // Check if the username already exists for another user
+            // Check if the username already exists
             bool usernameExists = await _db.Users.AnyAsync(u => u.UserId != userDetailDTO.UserId && u.Username == userDetailDTO.Username);
             if (usernameExists)
             {
                 throw new Exception("Username already exists");
             }
 
-            // Check if the email already exists for another user
+            // Check if the email already exists 
             bool emailExists = await _db.Users.AnyAsync(u => u.UserId != userDetailDTO.UserId && u.Email == userDetailDTO.Email);
             if (emailExists)
             {
                 throw new Exception("Email already exists");
             }
 
+            // Update the user, no need to Update with LINQ, EF will track the changes
             user.Username = userDetailDTO.Username;
             user.Email = userDetailDTO.Email;
             user.Description = userDetailDTO.Description;

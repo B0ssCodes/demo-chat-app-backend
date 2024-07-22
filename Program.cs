@@ -1,5 +1,4 @@
 using ChatApp.Data;
-using ChatApp.DataService;
 using ChatApp.Hubs;
 using ChatApp.Repositories;
 using ChatApp.Repositories.Interfaces;
@@ -36,8 +35,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add the MemoryDb to the services using the singleton pattern to only have one instance of it running
-builder.Services.AddSingleton<MemoryDb>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

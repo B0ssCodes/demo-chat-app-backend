@@ -12,6 +12,8 @@ namespace ChatApp.Data
             _configuration = configuration;
         }
 
+        // Override the OnConfiguring method to use the connection string from the appsettings.json file
+        // to connect to the PostgreSQL database
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             options.UseNpgsql(_configuration.GetConnectionString("DefaultDbConnection"));
