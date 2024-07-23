@@ -1,6 +1,7 @@
 ﻿using ChatApp.Models;
 using ChatApp.Models.Dto;
 using ChatApp.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -20,6 +21,7 @@ namespace ChatApp.Controllers
         }
         [HttpGet]
         [Route("getRooms")]
+        [Authorize]
         public async Task<IActionResult> GetRooms()
         {
             ApiResponse<List<RoomResponseDTO>> _response = new ApiResponse<List<RoomResponseDTO>>();
@@ -48,6 +50,7 @@ namespace ChatApp.Controllers
 
         [HttpGet]
         [Route("getRoom/{roomId}")]
+        [Authorize]
         public async Task<IActionResult> GetRoom(int roomId)
         {
             ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
@@ -74,6 +77,7 @@ namespace ChatApp.Controllers
 
         [HttpGet]
         [Route("getRoomsByUser/{userId}")]
+        [Authorize]
         public async Task<IActionResult> GetRoomsByUser(int userId)
         {
             ApiResponse<List<RoomResponseDTO>> _response = new ApiResponse<List<RoomResponseDTO>>();
@@ -100,6 +104,7 @@ namespace ChatApp.Controllers
 
         [HttpPost]
         [Route("createRoom")]
+        [Authorize]
         public async Task<IActionResult> CreateRoom(RoomRequestDTO roomDTO)
         {
             ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
@@ -127,6 +132,7 @@ namespace ChatApp.Controllers
 
         [HttpPost]
         [Route("addUserToRoom")]
+        [Authorize]
         public async Task<IActionResult> AddUserToRoom(RoomJoinDTO roomDTO)
         {
             ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();
@@ -154,6 +160,7 @@ namespace ChatApp.Controllers
 
         [HttpPost]
         [Route("removeUserFromRoom")]
+        [Authorize]
         public async Task<IActionResult> RemoveUserFromRoom(RoomJoinDTO roomDTO)
         {
             ApiResponse<RoomResponseDTO> _response = new ApiResponse<RoomResponseDTO>();

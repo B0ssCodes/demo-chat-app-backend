@@ -126,12 +126,6 @@ namespace ChatApp.Repositories
                 throw new Exception("Username already exists");
             }
 
-            // Check if the email already exists 
-            bool emailExists = await _db.Users.AnyAsync(u => u.UserId != userDetailDTO.UserId && u.Email == userDetailDTO.Email);
-            if (emailExists)
-            {
-                throw new Exception("Email already exists");
-            }
 
             // Update the user, no need to Update with LINQ, EF will track the changes
             user.Username = userDetailDTO.Username;

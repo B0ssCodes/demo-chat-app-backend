@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ChatApp.Controllers
 {
@@ -103,6 +104,7 @@ namespace ChatApp.Controllers
 
         [HttpGet]
         [Route("getUserDetails/{userId}")]
+        [Authorize]
         public async Task<IActionResult> GetUserDetails(int userId)
         {
             UserDetailDTO userDetails = await _userRepository.GetUserDetails(userId);
@@ -128,6 +130,7 @@ namespace ChatApp.Controllers
 
         [HttpPut]
         [Route("updateUserDetails")]
+        [Authorize]
         public async Task<IActionResult> UpdateUserDetails([FromBody] UserDetailDTO userDetailDTO)
         {
             try

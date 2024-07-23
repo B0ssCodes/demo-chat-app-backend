@@ -1,6 +1,7 @@
 ﻿using ChatApp.Models;
 using ChatApp.Models.Dto;
 using ChatApp.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -19,6 +20,7 @@ namespace ChatApp.Controllers
 
         [HttpPost]
         [Route("create")]
+        [Authorize]
         public async Task<IActionResult> CreateMessage([FromBody] MessageRequestDTO messageDTO)
         {
             ApiResponse<MessageResponseDTO> _response = new();
@@ -48,6 +50,7 @@ namespace ChatApp.Controllers
 
         [HttpGet]
         [Route("room/{roomId}")]
+        [Authorize]
         public async Task<IActionResult> GetRoomMessages(int roomId)
         {
             ApiResponse<List<MessageResponseDTO>> _response = new();
@@ -75,6 +78,7 @@ namespace ChatApp.Controllers
 
         [HttpGet]
         [Route("user/{userId}")]
+        [Authorize]
         public async Task<IActionResult> GetUserMessages(int userId)
         {
             ApiResponse<List<MessageResponseDTO>> _response = new();
