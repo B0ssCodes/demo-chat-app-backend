@@ -16,7 +16,7 @@ namespace ChatApp.Data
         // to connect to the PostgreSQL database
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            options.UseNpgsql(_configuration.GetConnectionString("DefaultDbConnection"));
+            options.UseSqlite(_configuration.GetConnectionString("DefaultDbConnection"));
         }
 
         public DbSet<Room> Rooms { get; set; }

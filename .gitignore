@@ -10,6 +10,9 @@
 *.userosscache
 *.sln.docstates
 
+chatapp.db
+chatapp.db-shm
+chatapp.db-wal
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

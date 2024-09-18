@@ -5,46 +5,39 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace ChatApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240718101614_AddRoomUserMessageToDb")]
-    partial class AddRoomUserMessageToDb
+    [Migration("20240918103439_SwitchedToSQLite")]
+    partial class SwitchedToSQLite
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.7")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
-
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
 
             modelBuilder.Entity("ChatApp.Models.Message", b =>
                 {
                     b.Property<int>("MessageId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MessageId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("RoomId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("MessageId");
 
@@ -59,13 +52,15 @@ namespace ChatApp.Migrations
                 {
                     b.Property<int>("RoomId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RoomId"));
-
-                    b.Property<string>("RoomName")
+                    b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.HasKey("RoomId");
 
@@ -76,22 +71,46 @@ namespace ChatApp.Migrations
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserId"));
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
-                    b.Property<int?>("RoomId")
-                        .HasColumnType("integer");
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordSalt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("UserId");
 
-                    b.HasIndex("RoomId");
-
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("RoomUser", b =>
+                {
+                    b.Property<int>("RoomsRoomId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UsersUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("RoomsRoomId", "UsersUserId");
+
+                    b.HasIndex("UsersUserId");
+
+                    b.ToTable("RoomUser");
                 });
 
             modelBuilder.Entity("ChatApp.Models.Message", b =>
@@ -113,18 +132,24 @@ namespace ChatApp.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ChatApp.Models.User", b =>
+            modelBuilder.Entity("RoomUser", b =>
                 {
                     b.HasOne("ChatApp.Models.Room", null)
-                        .WithMany("Users")
-                        .HasForeignKey("RoomId");
+                        .WithMany()
+                        .HasForeignKey("RoomsRoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ChatApp.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ChatApp.Models.Room", b =>
                 {
                     b.Navigation("Messages");
-
-                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("ChatApp.Models.User", b =>

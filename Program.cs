@@ -37,7 +37,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultDbConnection")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultDbConnection")));
 
 
 // Add Cors policy to allow the React frontend to connect to the backend, Implementation is not very secure but it is good for development
